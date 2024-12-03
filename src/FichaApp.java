@@ -163,15 +163,11 @@ public class FichaApp {
         frame.getContentPane().add(scrollHistoria);
 
 
-        JButton btnSalvar = new JButton("Salvar Ficha");
-        btnSalvar.setBounds(10, 500, 150, 25);
-        frame.getContentPane().add(btnSalvar);
-        btnSalvar.addActionListener(e -> salvarFicha());
+        JButton btnSalvarAtualizar = new JButton("Salvar/Atualizar");
+        btnSalvarAtualizar.setBounds(10, 500, 150, 25);
+        frame.getContentPane().add(btnSalvarAtualizar);
+        btnSalvarAtualizar.addActionListener(e -> salvarOuAtualizarFicha());
         
-        JButton btnAtualizar = new JButton("Atualizar Ficha");
-        btnAtualizar.setBounds(170, 500, 150, 25);
-        frame.getContentPane().add(btnAtualizar);
-        btnAtualizar.addActionListener(e -> atualizarFicha());
 
         JButton btnDeletar = new JButton("Deletar Ficha");
         btnDeletar.setBounds(330, 500, 150, 25);
@@ -197,11 +193,61 @@ public class FichaApp {
         });
 
         // Botão para carregar as fichas do banco de dados
-        JButton btnCarregarDoBanco = new JButton("Carregar do Banco");
-        btnCarregarDoBanco.setBounds(170, 500, 150, 25);
-        frame.getContentPane().add(btnCarregarDoBanco);
-        btnCarregarDoBanco.addActionListener(e -> carregarDoBanco());
+        JButton cancelar = new JButton("Cancelar");
+        cancelar.setBounds(170, 500, 150, 25);
+        frame.getContentPane().add(cancelar);
+        cancelar.addActionListener(e -> limparCampos());
     }
+    
+    private void salvarOuAtualizarFicha() {
+        String nome = txtNome.getText();
+        String raca = txtRaca.getText();
+        String classe = txtClasse.getText();
+        String nivelText = txtNivel.getText();
+        String pontosDeVidaText = txtPontosDeVida.getText();
+        String pontosDeManaText = txtPontosDeMana.getText();
+        String forcaText = txtForca.getText();
+        String destrezaText = txtDestreza.getText();
+        String constituicaoText = txtConstituicao.getText();
+        String inteligenciaText = txtInteligencia.getText();
+        String sabedoriaText = txtSabedoria.getText();
+        String carismaText = txtCarisma.getText();
+        String alinhamento = txtAlinhamento.getText();
+        String historia = txtHistoria.getText();
+
+        // Verificar se algum campo obrigatório está vazio
+        if (nome.isEmpty() || raca.isEmpty() || classe.isEmpty() || nivelText.isEmpty() || pontosDeVidaText.isEmpty() ||
+            pontosDeManaText.isEmpty() || forcaText.isEmpty() || destrezaText.isEmpty() || constituicaoText.isEmpty() ||
+            inteligenciaText.isEmpty() || sabedoriaText.isEmpty() || carismaText.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Por favor, preencha todos os campos obrigatórios!", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int nivel = Integer.parseInt(nivelText);
+        int pontosDeVida = Integer.parseInt(pontosDeVidaText);
+        int pontosDeMana = Integer.parseInt(pontosDeManaText);
+        int forca = Integer.parseInt(forcaText);
+        int destreza = Integer.parseInt(destrezaText);
+        int constituicao = Integer.parseInt(constituicaoText);
+        int inteligencia = Integer.parseInt(inteligenciaText);
+        int sabedoria = Integer.parseInt(sabedoriaText);
+        int carisma = Integer.parseInt(carismaText);
+
+        // Verifica se há uma ficha selecionada
+        int selectedRow = tabelaFichas.getSelectedRow();
+        if (selectedRow >= 0) {
+            // Atualiza a ficha existente
+            int fichaId = (int) modeloTabela.getValueAt(selectedRow, 0);
+            atualizarFicha(fichaId, nome, raca, classe, nivel, pontosDeVida, pontosDeMana, forca, destreza, constituicao, inteligencia, sabedoria, carisma, alinhamento, historia);
+        } else {
+            // Salva uma nova ficha
+            salvarNovaFicha(nome, raca, classe, nivel, pontosDeVida, pontosDeMana, forca, destreza, constituicao, inteligencia, sabedoria, carisma, alinhamento, historia);
+        }
+
+        // Recarrega os dados na tabela
+        carregarDoBanco();
+    }
+
     
     private void carregarFicha(int fichaId) {
         String query = "SELECT * FROM fichas WHERE id=?";
@@ -232,40 +278,63 @@ public class FichaApp {
         }
     }
 
-
-    private void salvarFicha() {
-        String query = "INSERT INTO fichas (nome, raca, classe, nivel, pontos_de_vida, pontos_de_mana, forca, destreza, constituicao, inteligencia, sabedoria, carisma, alinhamento, historia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+    
+    private void atualizarFicha(int fichaId, String nome, String raca, String classe, int nivel, int pontosDeVida, int pontosDeMana, int forca, int destreza, int constituicao, int inteligencia, int sabedoria, int carisma, String alinhamento, String historia) {
+        String query = "UPDATE fichas SET nome=?, raca=?, classe=?, nivel=?, pontos_de_vida=?, pontos_de_mana=?, forca=?, destreza=?, constituicao=?, inteligencia=?, sabedoria=?, carisma=?, alinhamento=?, historia=? WHERE id=?";
         try (Connection conn = Conexao.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, txtNome.getText());
-            stmt.setString(2, txtRaca.getText());
-            stmt.setString(3, txtClasse.getText());
-            stmt.setInt(4, Integer.parseInt(txtNivel.getText()));
-            stmt.setInt(5, Integer.parseInt(txtPontosDeVida.getText()));
-            stmt.setInt(6, Integer.parseInt(txtPontosDeMana.getText()));
-            stmt.setInt(7, Integer.parseInt(txtForca.getText()));
-            stmt.setInt(8, Integer.parseInt(txtDestreza.getText()));
-            stmt.setInt(9, Integer.parseInt(txtConstituicao.getText()));
-            stmt.setInt(10, Integer.parseInt(txtInteligencia.getText()));
-            stmt.setInt(11, Integer.parseInt(txtSabedoria.getText()));
-            stmt.setInt(12, Integer.parseInt(txtCarisma.getText()));
-            stmt.setString(13, txtAlinhamento.getText());
-            stmt.setString(14, txtHistoria.getText());
-
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(frame, "Ficha salva no banco com sucesso!");
-
-            // Limpar os campos após salvar
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, nome);
+            pstmt.setString(2, raca);
+            pstmt.setString(3, classe);
+            pstmt.setInt(4, nivel);
+            pstmt.setInt(5, pontosDeVida);
+            pstmt.setInt(6, pontosDeMana);
+            pstmt.setInt(7, forca);
+            pstmt.setInt(8, destreza);
+            pstmt.setInt(9, constituicao);
+            pstmt.setInt(10, inteligencia);
+            pstmt.setInt(11, sabedoria);
+            pstmt.setInt(12, carisma);
+            pstmt.setString(13, alinhamento);
+            pstmt.setString(14, historia);
+            pstmt.setInt(15, fichaId);
+            pstmt.executeUpdate();
+            JOptionPane.showMessageDialog(frame, "Ficha atualizada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             limparCampos();
-            carregarDoBanco();
-
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Erro ao salvar ficha no banco de dados!", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Erro ao atualizar a ficha!", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private void salvarNovaFicha(String nome, String raca, String classe, int nivel, int pontosDeVida, int pontosDeMana, int forca, int destreza, int constituicao, int inteligencia, int sabedoria, int carisma, String alinhamento, String historia) {
+        String query = "INSERT INTO fichas (nome, raca, classe, nivel, pontos_de_vida, pontos_de_mana, forca, destreza, constituicao, inteligencia, sabedoria, carisma, alinhamento, historia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = Conexao.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, nome);
+            pstmt.setString(2, raca);
+            pstmt.setString(3, classe);
+            pstmt.setInt(4, nivel);
+            pstmt.setInt(5, pontosDeVida);
+            pstmt.setInt(6, pontosDeMana);
+            pstmt.setInt(7, forca);
+            pstmt.setInt(8, destreza);
+            pstmt.setInt(9, constituicao);
+            pstmt.setInt(10, inteligencia);
+            pstmt.setInt(11, sabedoria);
+            pstmt.setInt(12, carisma);
+            pstmt.setString(13, alinhamento);
+            pstmt.setString(14, historia);
+            pstmt.executeUpdate();
+            JOptionPane.showMessageDialog(frame, "Nova ficha salva com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            limparCampos();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Erro ao salvar a nova ficha!", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    
 
     private void limparCampos() {
         txtNome.setText("");
@@ -322,67 +391,33 @@ public class FichaApp {
     }
 
     
-    private void atualizarFicha() {
-        int selectedRow = tabelaFichas.getSelectedRow();
-        if (selectedRow >= 0) {
-            int fichaId = (int) modeloTabela.getValueAt(selectedRow, 0); // Obtém o ID da ficha selecionada
-
-            String query = "UPDATE fichas SET nome=?, raca=?, classe=?, nivel=?, pontos_de_vida=?, pontos_de_mana=?, forca=?, destreza=?, " +
-                    "constituicao=?, inteligencia=?, sabedoria=?, carisma=?, alinhamento=?, historia=? WHERE id=?";
-
-            try (Connection conn = Conexao.getInstance().getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, txtNome.getText());
-                pstmt.setString(2, txtRaca.getText());
-                pstmt.setString(3, txtClasse.getText());
-                pstmt.setInt(4, Integer.parseInt(txtNivel.getText()));
-                pstmt.setInt(5, Integer.parseInt(txtPontosDeVida.getText()));
-                pstmt.setInt(6, Integer.parseInt(txtPontosDeMana.getText()));
-                pstmt.setInt(7, Integer.parseInt(txtForca.getText()));
-                pstmt.setInt(8, Integer.parseInt(txtDestreza.getText()));
-                pstmt.setInt(9, Integer.parseInt(txtConstituicao.getText()));
-                pstmt.setInt(10, Integer.parseInt(txtInteligencia.getText()));
-                pstmt.setInt(11, Integer.parseInt(txtSabedoria.getText()));
-                pstmt.setInt(12, Integer.parseInt(txtCarisma.getText()));
-                pstmt.setString(13, txtAlinhamento.getText());
-                pstmt.setString(14, txtHistoria.getText());
-                pstmt.setInt(15, fichaId); // Define o ID na consulta
-
-                pstmt.executeUpdate();
-                JOptionPane.showMessageDialog(frame, "Ficha atualizada com sucesso!");
-
-                carregarDoBanco(); // Recarrega os dados do banco para atualizar a tabela
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Erro ao atualizar ficha no banco de dados!", "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            JOptionPane.showMessageDialog(frame, "Selecione uma ficha para atualizar.", "Aviso", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-
-    
     private void deletarFicha() {
         int selectedRow = tabelaFichas.getSelectedRow();
         if (selectedRow >= 0) {
-            int fichaId = (int) modeloTabela.getValueAt(selectedRow, 0); // Obtém o ID da ficha selecionada
+            int fichaId = (int) modeloTabela.getValueAt(selectedRow, 0);
 
-            String query = "DELETE FROM fichas WHERE id=?";
+            int confirm = JOptionPane.showConfirmDialog(frame, "Você tem certeza que deseja excluir esta ficha?", "Confirmação", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                String query = "DELETE FROM fichas WHERE id=?";
+                try (Connection conn = Conexao.getInstance().getConnection();
+                     PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.setInt(1, fichaId);
+                    pstmt.executeUpdate();
+                    JOptionPane.showMessageDialog(frame, "Ficha excluída com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparCampos();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(frame, "Erro ao excluir a ficha!", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
 
-            try (Connection conn = Conexao.getInstance().getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setInt(1, fichaId); // Define o ID da ficha para a cláusula WHERE
-                pstmt.executeUpdate();
-                carregarDoBanco(); // Atualiza a tabela após deletar a ficha
-                limparCampos();
-            } catch (SQLException e) {
-                e.printStackTrace();
+                // Recarrega os dados na tabela
+                carregarDoBanco();
             }
         } else {
-            JOptionPane.showMessageDialog(frame, "Selecione uma ficha para deletar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Por favor, selecione uma ficha para excluir.", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
 
     private void verificarFichasNaoSalvas() {
