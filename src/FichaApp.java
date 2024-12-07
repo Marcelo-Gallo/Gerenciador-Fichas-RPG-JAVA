@@ -5,6 +5,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.*;
 import java.util.ArrayList;
+import java.io.FileWriter;
+import java.io.IOException;
 
 
 public class FichaApp {
@@ -41,6 +43,9 @@ public class FichaApp {
             @Override
             public void windowClosing(WindowEvent e) {
                 verificarFichasNaoSalvas();
+                exportarFichasParaCSV("C:\\Users\\marce\\eclipse-workspace\\Gerenciador-Fichas-RPG\\src\\arquivo.csv");
+                JOptionPane.showMessageDialog(frame, "Fichas exportadas com sucesso!");
+                System.exit(0);
             }
         });
 
@@ -164,13 +169,17 @@ public class FichaApp {
 
 
         JButton btnSalvarAtualizar = new JButton("Salvar/Atualizar");
-        btnSalvarAtualizar.setBounds(10, 500, 150, 25);
+        btnSalvarAtualizar.setBounds(170, 500, 150, 25);
         frame.getContentPane().add(btnSalvarAtualizar);
         btnSalvarAtualizar.addActionListener(e -> salvarOuAtualizarFicha());
         
+        JButton cancelar = new JButton("Cancelar");
+        cancelar.setBounds(330, 500, 150, 25);
+        frame.getContentPane().add(cancelar);
+        cancelar.addActionListener(e -> limparCampos());
 
         JButton btnDeletar = new JButton("Deletar Ficha");
-        btnDeletar.setBounds(330, 500, 150, 25);
+        btnDeletar.setBounds(490, 500, 150, 25);
         frame.getContentPane().add(btnDeletar);
         btnDeletar.addActionListener(e -> deletarFicha());
 
@@ -180,7 +189,7 @@ public class FichaApp {
 
         tabelaFichas.setModel(modeloTabela);
         JScrollPane scrollPane = new JScrollPane(tabelaFichas);
-        scrollPane.setBounds(350, 10, 400, 450);
+        scrollPane.setBounds(350, 10, 400, 465);
         frame.getContentPane().add(scrollPane);
         tabelaFichas.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -191,12 +200,68 @@ public class FichaApp {
                 }
             }
         });
+    }
+    
+    private void exportarFichasParaCSV(String arquivo) {
+        ArrayList<Ficha> fichas = buscarFichasDoBanco();
+        try (FileWriter csvWriter = new FileWriter(arquivo)) {
+            // Cabeçalho do CSV
+            csvWriter.append("ID,Nome,Raça,Classe,Nível,Pontos de Vida,Pontos de Mana,Força,Destreza,Constituição,Inteligência,Sabedoria,Carisma,Alinhamento,História\n");
 
-        // Botão para carregar as fichas do banco de dados
-        JButton cancelar = new JButton("Cancelar");
-        cancelar.setBounds(170, 500, 150, 25);
-        frame.getContentPane().add(cancelar);
-        cancelar.addActionListener(e -> limparCampos());
+            // Dados das fichas
+            for (Ficha ficha : fichas) {
+                csvWriter.append(String.valueOf(ficha.getId())).append(",");
+                csvWriter.append(ficha.getNome()).append(",");
+                csvWriter.append(ficha.getRaca()).append(",");
+                csvWriter.append(ficha.getClasse()).append(",");
+                csvWriter.append(String.valueOf(ficha.getNivel())).append(",");
+                csvWriter.append(String.valueOf(ficha.getPontosDeVida())).append(",");
+                csvWriter.append(String.valueOf(ficha.getPontosDeMana())).append(",");
+                csvWriter.append(String.valueOf(ficha.getForca())).append(",");
+                csvWriter.append(String.valueOf(ficha.getDestreza())).append(",");
+                csvWriter.append(String.valueOf(ficha.getConstituicao())).append(",");
+                csvWriter.append(String.valueOf(ficha.getInteligencia())).append(",");
+                csvWriter.append(String.valueOf(ficha.getSabedoria())).append(",");
+                csvWriter.append(String.valueOf(ficha.getCarisma())).append(",");
+                csvWriter.append(ficha.getAlinhamento()).append(",");
+                csvWriter.append(ficha.getHistoria().replace("\n", " ").replace("\r", " ")).append("\n");
+            }
+            csvWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private ArrayList<Ficha> buscarFichasDoBanco() {
+        ArrayList<Ficha> fichas = new ArrayList<>();
+        String query = "SELECT * FROM fichas";
+        try (Connection conn = Conexao.getInstance().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                Ficha ficha = new Ficha();
+                ficha.setId(rs.getInt("id"));
+                ficha.setNome(rs.getString("nome"));
+                ficha.setRaca(rs.getString("raca"));
+                ficha.setClasse(rs.getString("classe"));
+                ficha.setNivel(rs.getInt("nivel"));
+                ficha.setPontosDeVida(rs.getInt("pontos_de_vida"));
+                ficha.setPontosDeMana(rs.getInt("pontos_de_mana"));
+                ficha.setForca(rs.getInt("forca"));
+                ficha.setDestreza(rs.getInt("destreza"));
+                ficha.setConstituicao(rs.getInt("constituicao"));
+                ficha.setInteligencia(rs.getInt("inteligencia"));
+                ficha.setSabedoria(rs.getInt("sabedoria"));
+                ficha.setCarisma(rs.getInt("carisma"));
+                ficha.setAlinhamento(rs.getString("alinhamento"));
+                ficha.setHistoria(rs.getString("historia"));
+                fichas.add(ficha);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return fichas;
     }
     
     private void salvarOuAtualizarFicha() {
